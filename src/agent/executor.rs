@@ -137,8 +137,8 @@ where
 
                         let mut tools_ai_message_seen: HashMap<String, ()> = HashMap::default();
                         for (action, observation) in steps {
-                            let LogTools { tool_id, tools } = serde_json::from_str(&action.log).unwrap();
-                            let tools_value: serde_json::Value = serde_json::from_str(&tools).unwrap();
+                            let LogTools { tool_id, tools } = serde_json::from_str(&action.log).expect(&action.log);
+                            let tools_value: serde_json::Value = serde_json::from_str(&tools).expect(&tools);
                             if tools_ai_message_seen.insert(tools, ()).is_none() {
                                 memory.add_message(
                                     Message::new_ai_message("").with_tool_calls(tools_value),
