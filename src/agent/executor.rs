@@ -137,7 +137,8 @@ where
 
                         let mut tools_ai_message_seen: HashMap<String, ()> = HashMap::default();
                         for (action, observation) in steps {
-                            let LogTools { tool_id, tools } = serde_json::from_str(&action.log).expect(&action.log);
+                            let action_log = strip_code_fence(&action.log);
+                            let LogTools { tool_id, tools } = serde_json::from_str(&action_log).expect(&action_log);
                             let tools_value: serde_json::Value = serde_json::from_str(&tools).expect(&tools);
                             if tools_ai_message_seen.insert(tools, ()).is_none() {
                                 memory.add_message(
@@ -171,4 +172,26 @@ where
         let result = self.call(input_variables).await?;
         Ok(result.generation)
     }
+}
+fn strip_code_fence(input: &str) -> String {
+    let trimmed = input.trim();
+
+    // Check if it starts with triple backticks.
+    if trimmed.starts_with("```") {
+        // Split into lines.
+        let mut lines = trimmed.lines();
+        // Remove the first line (```json or similar).
+        lines.next();
+        // Collect the rest of the lines.
+        let mut content: Vec<&str> = lines.collect();
+        // Remove the last line if it is just ``` (or contains only backticks).
+        if let Some(last_line) = content.last() {
+            if last_line.trim().starts_with("```") {
+                content.pop();
+            }
+        }
+        // Reassemble the content into a single string.
+        return content.join("\n").trim().to_string();
+    }
+    trimmed.to_string()
 }
